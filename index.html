@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>MinistryOS Pro</title>
-    
-    <meta name="mobile-web-app-capable" content="yes">
+    <title>MinistryOS 3.0</title>
+    <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#0f172a">
 
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
     <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
@@ -21,21 +21,20 @@
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .safe-pb { padding-bottom: env(safe-area-inset-bottom); }
         .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
-        .cal-day { min-height: 50px; border-radius: 8px; position: relative; font-size: 11px; padding: 4px; display: flex; flex-direction: column; align-items: center; cursor: pointer; background: #111827; border: 1px solid #1f2937; }
-        .cal-day:active { background: #1e293b; }
-        .current-day { border: 2px solid #3b82f6; background: rgba(59, 130, 246, 0.1); }
+        .cal-day { min-height: 45px; border-radius: 6px; font-size: 11px; padding: 4px; display: flex; flex-direction: column; align-items: center; }
+        .current-day { border: 1px solid #3b82f6; background: rgba(59, 130, 246, 0.1); }
         .dot { width: 6px; height: 6px; border-radius: 50%; margin-bottom: 2px; }
-        input, textarea, select { background: #1e293b; border: 1px solid #334155; color: white; border-radius: 8px; padding: 10px; width: 100%; outline: none; }
+        input, textarea, select { background: #1e293b; border: 1px solid #334155; color: white; border-radius: 8px; padding: 12px; width: 100%; outline: none; font-size: 16px; }
         label { font-size: 11px; text-transform: uppercase; color: #94a3b8; font-weight: bold; margin-bottom: 4px; display: block; }
-        .listening { border-color: #ef4444 !important; box-shadow: 0 0 8px #ef4444; }
+        .tab-btn { display: flex; flex-direction: column; items: center; gap: 4px; color: #64748b; transition: all 0.2s; }
+        .tab-active { color: #3b82f6; transform: scale(1.1); }
     </style>
 </head>
 <body>
-
     <div id="root" class="h-screen w-screen bg-slate-900"></div>
 
     <script type="text/babel">
-        // --- 1. FIREBASE CONFIG ---
+        // --- CONFIG ---
         const firebaseConfig = {
           apiKey: "AIzaSyCWTjZ5P-cvfL3bgFOrl53qRQEfWP35ThE",
           authDomain: "crossyth-dashboard.firebaseapp.com",
@@ -47,285 +46,143 @@
         if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
-        // --- 2. ICONS ---
-        const Icons = {
-            Calendar: () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>,
-            MapPin: () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>,
-            Mic: () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>,
-            Users: () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>,
-            Book: () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>,
-            Plus: () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>,
-            ChevronLeft: () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>,
-            ChevronRight: () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>,
-            ChevronDown: () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>,
-            CheckSquare: () => <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>,
-            Trash: () => <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>,
-            Edit: () => <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>,
-            MicOn: () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="red" stroke="red" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+        // --- ICONS ---
+        const Icons = window.lucide;
+        const Icon = ({name, size=20, className}) => {
+            const LucideIcon = Icons[name] || Icons.HelpCircle;
+            return <LucideIcon size={size} className={className} />;
         };
 
-        // --- 3. SPEECH TOOL ---
-        const DictationInput = ({ value, onChange, placeholder, isTextArea = false }) => {
-            const [isListening, setIsListening] = React.useState(false);
-            const toggleListening = () => {
-                if (!('webkitSpeechRecognition' in window)) return alert("Speech recognition not supported.");
-                const recognition = new window.webkitSpeechRecognition();
-                recognition.onstart = () => setIsListening(true);
-                recognition.onend = () => setIsListening(false);
-                recognition.onresult = (event) => onChange(value ? value + " " + event.results[0][0].transcript : event.results[0][0].transcript);
-                recognition.start();
-            };
-            return (
-                <div className="relative">
-                    {isTextArea ? 
-                        <textarea value={value} onChange={e=>onChange(e.target.value)} placeholder={placeholder} className={isListening ? 'listening' : ''} rows="3" /> :
-                        <input value={value} onChange={e=>onChange(e.target.value)} placeholder={placeholder} className={isListening ? 'listening' : ''} />
-                    }
-                    <button onClick={toggleListening} className="absolute right-2 top-2 p-1.5 bg-slate-800 rounded-full">{isListening ? <Icons.MicOn/> : <Icons.Mic/>}</button>
-                </div>
-            );
-        };
-
-        // --- 4. APP ---
+        // --- APP ---
         function App() {
             const [tab, setTab] = React.useState('calendar');
+
             return (
                 <div className="flex flex-col h-full w-full bg-slate-900 text-white safe-pb">
-                    <div className="h-16 flex items-center justify-between px-4 border-b border-slate-800 shrink-0">
-                        <span className="font-bold text-lg text-white">MinistryOS Pro</span>
-                        <div className="w-9 h-9 bg-slate-800 rounded-full border border-slate-700 flex items-center justify-center font-bold text-slate-400">PC</div>
+                    {/* Header */}
+                    <div className="h-14 flex items-center justify-between px-4 bg-slate-900 border-b border-slate-800 shrink-0">
+                        <div className="flex items-center gap-2">
+                            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center font-bold text-white">M</div>
+                            <span className="font-bold text-lg tracking-tight">MinistryOS</span>
+                        </div>
+                        <div className="text-[10px] bg-slate-800 px-2 py-1 rounded text-slate-400">V3.0</div>
                     </div>
+
+                    {/* Content */}
                     <div className="flex-1 overflow-y-auto bg-slate-950">
                         {tab === 'calendar' && <CalendarView />}
+                        {tab === 'meetings' && <MeetingsManager />}
                         {tab === 'benson' && <GenericManager category="Benson" color="red" />}
                         {tab === 'prod' && <ProductionManager />}
                         {tab === 'crossyth' && <UnifiedManager category="CrossYTH" color="blue" />}
                         {tab === 'crosslink' && <UnifiedManager category="CrossLink" color="purple" />}
                     </div>
-                    <div className="h-20 bg-slate-900 border-t border-slate-800 flex justify-around items-center pt-2 safe-pb">
-                        <NavBtn id="calendar" icon={Icons.Calendar} label="Calendar" active={tab} set={setTab} />
-                        <NavBtn id="benson" icon={Icons.MapPin} label="Benson" active={tab} set={setTab} />
-                        <NavBtn id="prod" icon={Icons.Mic} label="Prod" active={tab} set={setTab} />
-                        <NavBtn id="crossyth" icon={Icons.Users} label="YTH" active={tab} set={setTab} />
-                        <NavBtn id="crosslink" icon={Icons.Book} label="Link" active={tab} set={setTab} />
+
+                    {/* Nav Bar */}
+                    <div className="h-20 bg-slate-900 border-t border-slate-800 flex justify-around pt-3 safe-pb shrink-0">
+                        <NavBtn id="calendar" icon="Calendar" label="Cal" active={tab} set={setTab} />
+                        <NavBtn id="meetings" icon="Briefcase" label="Meet" active={tab} set={setTab} />
+                        <NavBtn id="benson" icon="MapPin" label="Benson" active={tab} set={setTab} />
+                        <NavBtn id="prod" icon="Mic2" label="Prod" active={tab} set={setTab} />
+                        <NavBtn id="crossyth" icon="Users" label="YTH" active={tab} set={setTab} />
+                        <NavBtn id="crosslink" icon="BookOpen" label="Link" active={tab} set={setTab} />
                     </div>
                 </div>
             );
         }
 
-        // --- 5. CALENDAR (CLICKABLE) ---
+        // --- 1. CALENDAR VIEW (With Master Agenda) ---
         function CalendarView() {
             const [date, setDate] = React.useState(new Date());
-            const [items, setItems] = React.useState([]);
-            const [selectedDay, setSelectedDay] = React.useState(null);
+            const [events, setEvents] = React.useState([]);
 
             React.useEffect(() => {
-                const unsub = db.collection('projects').onSnapshot(snap => setItems(snap.docs.map(d => d.data())));
-                return () => unsub();
+                // Fetch Projects
+                const unsub1 = db.collection('projects').onSnapshot(snap => {
+                    const items = snap.docs.map(d => ({id: d.id, ...d.data(), type:'Project'}));
+                    
+                    // Fetch Meetings (Nested listener for simplicity in this file)
+                    db.collection('meetings').get().then(mSnap => {
+                        const meets = mSnap.docs.map(d => ({id:d.id, ...d.data(), type:'Meeting', category:'Meeting'}));
+                        setEvents([...items, ...meets]);
+                    });
+                });
+                return () => unsub1();
             }, []);
 
             const daysInMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
             const firstDay = new Date(date.getFullYear(), date.getMonth(), 1).getDay();
-            const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+            const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
-            const getItemsForDay = (day) => {
-                const ds = new Date(date.getFullYear(), date.getMonth(), day).toISOString().split('T')[0];
-                return items.filter(i => i.dueDate === ds || i.date === ds);
-            };
-
-            const getColor = (cat, status) => {
-                if(status === 'Pending') return 'bg-slate-600';
+            const getColor = (cat) => {
+                if(cat === 'Meeting') return 'bg-emerald-500';
                 if(cat === 'Benson') return 'bg-red-500';
                 if(cat === 'Production') return 'bg-yellow-500';
                 if(cat === 'CrossYTH') return 'bg-blue-500';
                 return 'bg-purple-500';
             };
 
+            const getEventsForDay = (d) => {
+                const dateStr = new Date(date.getFullYear(), date.getMonth(), d).toISOString().split('T')[0];
+                return events.filter(e => e.dueDate === dateStr || e.date === dateStr);
+            };
+
+            // Master Agenda Logic (Future Events Only)
+            const upcomingEvents = events
+                .filter(e => new Date(e.dueDate || e.date) >= new Date(new Date().setHours(0,0,0,0)))
+                .sort((a,b) => (a.dueDate||a.date).localeCompare(b.dueDate||b.date));
+
             return (
                 <div className="p-4">
-                    <div className="flex justify-between items-center mb-4">
-                        <button onClick={() => setDate(new Date(date.setMonth(date.getMonth()-1)))} className="p-2 bg-slate-800 rounded-lg"><Icons.ChevronLeft/></button>
+                    {/* Calendar Grid */}
+                    <div className="flex justify-between items-center mb-6">
+                        <button onClick={()=>setDate(new Date(date.setMonth(date.getMonth()-1)))}><Icon name="ChevronLeft"/></button>
                         <h2 className="text-xl font-bold">{monthNames[date.getMonth()]} {date.getFullYear()}</h2>
-                        <button onClick={() => setDate(new Date(date.setMonth(date.getMonth()+1)))} className="p-2 bg-slate-800 rounded-lg"><Icons.ChevronRight/></button>
+                        <button onClick={()=>setDate(new Date(date.setMonth(date.getMonth()+1)))}><Icon name="ChevronRight"/></button>
                     </div>
-                    <div className="cal-grid mb-6">
-                        {['S','M','T','W','T','F','S'].map(d => <div key={d} className="text-center text-slate-600 text-[10px] font-bold py-1">{d}</div>)}
-                        {Array(firstDay).fill(null).map((_,i) => <div key={`e-${i}`} />)}
-                        {Array(daysInMonth).fill(null).map((_,i) => {
-                            const day = i + 1;
-                            const dayItems = getItemsForDay(day);
-                            const isToday = new Date().toDateString() === new Date(date.getFullYear(), date.getMonth(), day).toDateString();
+
+                    <div className="cal-grid mb-8">
+                        {['S','M','T','W','T','F','S'].map(d=><div key={d} className="text-center text-[10px] text-slate-500 py-1">{d}</div>)}
+                        {Array(firstDay).fill(null).map((_,i)=><div key={'e'+i}/>)}
+                        {Array(daysInMonth).fill(null).map((_,i)=>{
+                            const dayEvs = getEventsForDay(i+1);
+                            const isToday = new Date().toDateString() === new Date(date.getFullYear(), date.getMonth(), i+1).toDateString();
                             return (
-                                <div key={i} onClick={()=>setSelectedDay(day)} className={`cal-day ${isToday ? 'current-day' : ''} ${selectedDay===day?'border-blue-500':''}`}>
-                                    <span className="text-slate-400">{day}</span>
-                                    <div className="flex flex-wrap gap-0.5 justify-center mt-1">
-                                        {dayItems.map((it, idx) => <div key={idx} className={`dot ${getColor(it.category, it.status)}`} />)}
+                                <div key={i} className={`cal-day ${dayEvs.length ? 'bg-slate-800' : 'bg-slate-900'} ${isToday?'current-day':''}`}>
+                                    <span className={isToday?'text-blue-400 font-bold':'text-slate-400'}>{i+1}</span>
+                                    <div className="flex flex-wrap justify-center gap-1 mt-1">
+                                        {dayEvs.map((e,x)=><div key={x} className={`dot ${getColor(e.category)}`}/>)}
                                     </div>
                                 </div>
-                            );
+                            )
                         })}
                     </div>
-                    {selectedDay && (
-                        <div className="bg-slate-900 rounded-xl p-4 border border-slate-800">
-                            <h3 className="font-bold text-blue-400 mb-2">{monthNames[date.getMonth()]} {selectedDay} Schedule</h3>
-                            {getItemsForDay(selectedDay).length === 0 ? <p className="text-slate-500 text-sm">No items scheduled.</p> :
-                                getItemsForDay(selectedDay).map((it, idx) => (
-                                    <div key={idx} className="flex items-center gap-3 mb-2 p-2 bg-slate-950 rounded-lg">
-                                        <div className={`w-2 h-2 rounded-full ${getColor(it.category, it.status)}`} />
-                                        <div className="text-sm font-bold">{it.title} <span className="text-[10px] text-slate-500 font-normal">({it.category})</span></div>
-                                    </div>
-                                ))
-                            }
+
+                    {/* Master Agenda List */}
+                    <div className="space-y-4">
+                        <div className="flex items-center gap-2 mb-2">
+                            <Icon name="List" size={16} className="text-slate-500"/>
+                            <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest">Master Agenda (Next Up)</h3>
                         </div>
-                    )}
-                </div>
-            );
-        }
+                        
+                        {upcomingEvents.length === 0 && <div className="text-center text-slate-600 italic py-4">No upcoming events found.</div>}
 
-        // --- WORKFLOW HELPERS ---
-        const generateSmartWorkflow = (title, desc, dueDate) => {
-            const tasks = [];
-            const due = new Date(dueDate);
-            const calc = (days) => {
-                const d = new Date(due); d.setDate(d.getDate() - days); return d.toISOString().split('T')[0];
-            };
-            tasks.push({ txt: "Final Dry Run", date: calc(14), done: false, isTarget: true });
-            tasks.push({ txt: "Equipment Prep", date: calc(7), done: false });
-            tasks.push({ txt: "Team Briefing", date: calc(3), done: false });
-            return tasks;
-        };
-
-        // --- MANAGERS ---
-        function GenericManager({ category, color }) {
-            const [sub, setSub] = React.useState('Projects');
-            return (
-                <div className="p-4 flex flex-col h-full">
-                    <div className="flex bg-slate-900 p-1 rounded-xl mb-4 shrink-0">
-                        {['Projects', 'Events', 'Outreach'].map(t => (
-                            <button key={t} onClick={()=>setSub(t)} className={`flex-1 py-2 text-xs font-bold rounded-lg ${sub===t?'bg-slate-700 text-white':'text-slate-500'}`}>{t}</button>
-                        ))}
-                    </div>
-                    <WorkflowSystem category={category} subCategory={sub} color={color} />
-                </div>
-            );
-        }
-
-        function UnifiedManager({ category, color }) {
-            const [sub, setSub] = React.useState('Series');
-            return (
-                <div className="p-4 flex flex-col h-full">
-                    <div className="flex bg-slate-900 p-1 rounded-xl mb-4 shrink-0 overflow-x-auto">
-                        {['Series', 'Projects', 'Events', 'Outreach'].map(t => (
-                            <button key={t} onClick={()=>setSub(t)} className={`flex-1 py-2 px-3 text-xs font-bold rounded-lg whitespace-nowrap ${sub===t?'bg-slate-700 text-white':'text-slate-500'}`}>{t}</button>
-                        ))}
-                    </div>
-                    {sub==='Series' ? <SeriesManager category={category} color={color} /> : <WorkflowSystem category={category} subCategory={sub} color={color} />}
-                </div>
-            );
-        }
-
-        function WorkflowSystem({ category, subCategory, color }) {
-            const [mode, setMode] = React.useState('Ideas');
-            const [items, setItems] = React.useState([]);
-            const [isAdd, setIsAdd] = React.useState(false);
-            const [t, setT] = React.useState('');
-            const [d, setD] = React.useState('');
-            const [dt, setDt] = React.useState('');
-
-            React.useEffect(() => {
-                const unsub = db.collection('projects').where('category','==',category).where('subCategory','==',subCategory).where('status','==',mode==='Ideas'?'Pending':'Approved').onSnapshot(snap=>setItems(snap.docs.map(d=>({id:d.id,...d.data()}))));
-                return () => unsub();
-            }, [category, subCategory, mode]);
-
-            const save = async () => {
-                if(!t || !dt) return alert("Need Title/Date");
-                await db.collection('projects').add({category,subCategory,title:t,desc:d,dueDate:dt,status:'Pending',tasks:[]});
-                setIsAdd(false); setT(''); setD(''); setDt('');
-            };
-
-            const approve = async (it) => {
-                await db.collection('projects').doc(it.id).update({status:'Approved', tasks: generateSmartWorkflow(it.title,it.desc,it.dueDate)});
-            };
-
-            return (
-                <div className="flex-1 flex flex-col">
-                    <div className="flex justify-between mb-4">
-                        <div className="flex gap-4">
-                            <button onClick={()=>setMode('Ideas')} className={`text-sm font-bold ${mode==='Ideas'?'border-b-2 text-white':'text-slate-500'}`}>IDEAS</button>
-                            <button onClick={()=>setMode('Active')} className={`text-sm font-bold ${mode==='Active'?'border-b-2 text-white':'text-slate-500'}`}>ACTIVE</button>
-                        </div>
-                        {mode==='Ideas' && <button onClick={()=>setIsAdd(true)} className={`text-${color}-500`}><Icons.Plus/></button>}
-                    </div>
-                    {isAdd && (
-                        <div className="bg-slate-800 p-4 rounded-xl mb-4 space-y-3">
-                            <div><label>Title</label><DictationInput value={t} onChange={setT} /></div>
-                            <div><label>Description</label><DictationInput value={d} onChange={setD} isTextArea /></div>
-                            <div><label>Date</label><input type="date" value={dt} onChange={e=>setDt(e.target.value)} /></div>
-                            <div className="flex gap-2 pt-2"><button onClick={save} className={`flex-1 bg-${color}-600 py-2 rounded font-bold`}>Save</button><button onClick={()=>setIsAdd(false)} className="px-4 py-2 bg-slate-700 rounded">X</button></div>
-                        </div>
-                    )}
-                    <div className="space-y-3 pb-20">
-                        {items.map(it => <WorkflowCard key={it.id} it={it} mode={mode} onApprove={()=>approve(it)} color={color} />)}
-                    </div>
-                </div>
-            );
-        }
-
-        function WorkflowCard({ it, mode, onApprove, color }) {
-            const [open, setOpen] = React.useState(false);
-            return (
-                <div className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden">
-                    <div className="p-4" onClick={()=>mode==='Active' && setOpen(!open)}>
-                        <div className="flex justify-between items-start">
-                            <div className="flex-1">
-                                <h3 className="font-bold text-white">{it.title}</h3>
-                                <p className="text-xs text-slate-400 mt-1">{it.desc}</p>
-                                <div className="text-[10px] text-slate-500 mt-2">Due: {it.dueDate}</div>
-                            </div>
-                            {mode==='Ideas' ? <button onClick={(e)=>{e.stopPropagation();onApprove();}} className="bg-emerald-600 text-[10px] font-bold px-3 py-1.5 rounded">APPROVE</button> : <div className={`w-2 h-2 rounded-full bg-${color}-500 shadow-[0_0_8px_currentColor]`} />}
-                        </div>
-                    </div>
-                    {open && mode==='Active' && (
-                        <div className="bg-slate-950 p-4 border-t border-slate-800 space-y-3">
-                            {it.tasks && it.tasks.map((tk,i) => (
-                                <div key={i} className="flex gap-3 text-xs items-center">
-                                    <div className="w-4 h-4 rounded border border-slate-600 shrink-0" />
-                                    <div className="flex-1"><div className={tk.isTarget?'text-emerald-400 font-bold':''}>{tk.txt}</div><div className="text-[9px] text-slate-500">Target: {tk.date}</div></div>
+                        {upcomingEvents.map((e, i) => (
+                            <div key={i} className="flex gap-4 items-start bg-slate-900/50 p-3 rounded-xl border border-slate-800">
+                                <div className="flex flex-col items-center min-w-[50px] bg-slate-800 rounded p-2">
+                                    <span className="text-[10px] text-slate-400 uppercase font-bold">{new Date(e.dueDate||e.date).toLocaleString('default', {month:'short'})}</span>
+                                    <span className="text-xl font-bold text-white">{new Date(e.dueDate||e.date).getDate()}</span>
                                 </div>
-                            ))}
-                        </div>
-                    )}
-                </div>
-            );
-        }
-
-        // --- SERIES & SERMONS ---
-        function SeriesManager({ category, color }) {
-            const [list, setList] = React.useState([]);
-            const [add, setAdd] = React.useState(false);
-            const [exp, setExp] = React.useState(null);
-            const [st, setSt] = React.useState('');
-            const [sw, setSw] = React.useState('');
-
-            React.useEffect(() => {
-                const unsub = db.collection('series').where('category','==',category).onSnapshot(sn=>setList(sn.docs.map(d=>({id:d.id,...d.data()}))));
-                return () => unsub();
-            }, [category]);
-
-            const save = async () => {
-                await db.collection('series').add({category,title:st,weeks:sw});
-                setAdd(false); setSt(''); setSw('');
-            };
-
-            return (
-                <div className="flex-1 overflow-y-auto pb-20">
-                    <div className="flex justify-between items-center mb-4"><h3 className="text-xs font-bold text-slate-500">SERIES</h3><button onClick={()=>setAdd(true)} className={`text-${color}-500`}><Icons.Plus/></button></div>
-                    {add && <div className="bg-slate-800 p-4 rounded-xl mb-4 space-y-2"><input placeholder="Title" value={st} onChange={e=>setSt(e.target.value)} /><input placeholder="Weeks" type="number" value={sw} onChange={e=>setSw(e.target.value)} /><button onClick={save} className={`w-full py-2 rounded bg-${color}-600 font-bold text-sm`}>Create</button></div>}
-                    <div className="space-y-3">
-                        {list.map(s => (
-                            <div key={s.id} className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden">
-                                <div className="p-4 flex justify-between items-center" onClick={()=>setExp(exp===s.id?null:s.id)}><div><div className="font-bold">{s.title}</div><div className="text-xs text-slate-500">{s.weeks} Weeks</div></div><Icons.ChevronDown/></div>
-                                {exp===s.id && <SermonList seriesId={s.id} color={color} />}
+                                <div className="flex-1">
+                                    <div className="flex justify-between items-start">
+                                        <h4 className="font-bold text-sm text-white">{e.title}</h4>
+                                        <span className={`text-[10px] px-2 py-0.5 rounded-full text-white font-bold ${getColor(e.category)}`}>{e.category}</span>
+                                    </div>
+                                    <p className="text-xs text-slate-400 mt-1 line-clamp-1">{e.desc || e.notes || 'No details'}</p>
+                                    <div className="text-[10px] text-slate-500 mt-2 flex gap-2">
+                                        {e.type === 'Meeting' && <span className="flex items-center gap-1"><Icon name="Users" size={10}/> {e.attendees}</span>}
+                                    </div>
+                                </div>
                             </div>
                         ))}
                     </div>
@@ -333,57 +190,188 @@
             );
         }
 
-        function SermonList({ seriesId, color }) {
-            const [sermons, setSermons] = React.useState([]);
-            const [edit, setEdit] = React.useState(null);
-            const [fd, setFd] = React.useState({title:'',speaker:'',scripture:'',notes:''});
+        // --- 2. MEETINGS MANAGER (New Feature) ---
+        function MeetingsManager() {
+            const [meetings, setMeetings] = React.useState([]);
+            const [isAdding, setIsAdding] = React.useState(false);
+            const [activeMeeting, setActiveMeeting] = React.useState(null);
+
+            // Form Data
+            const [form, setForm] = React.useState({title:'', date:'', attendees:'', docLink:''});
+            const [notes, setNotes] = React.useState('');
 
             React.useEffect(() => {
-                const unsub = db.collection('sermons').where('seriesId','==',seriesId).onSnapshot(sn=>setSermons(sn.docs.map(d=>({id:d.id,...d.data()}))));
-                return () => unsub();
-            }, [seriesId]);
-
-            const save = async () => {
-                if(edit==='new') await db.collection('sermons').add({...fd, seriesId, weekNum: sermons.length+1});
-                else await db.collection('sermons').doc(edit).update(fd);
-                setEdit(null);
-            };
-
-            return (
-                <div className="bg-slate-950 p-4 border-t border-slate-800">
-                    {sermons.map(sm => (
-                        <div key={sm.id} className="mb-4 pb-4 border-b border-slate-800 last:border-0 relative">
-                            {edit===sm.id ? <div className="space-y-2"><DictationInput value={fd.title} onChange={v=>setFd({...fd,title:v})} /><textarea value={fd.notes} onChange={e=>setFd({...fd,notes:e.target.value})} className="text-xs bg-slate-800 p-2 w-full" rows="3" /><button onClick={save} className="w-full bg-blue-600 py-1 rounded text-xs font-bold">Save</button></div> : 
-                            <div onClick={()=>{setFd(sm);setEdit(sm.id)}}><div className="flex justify-between text-[10px] font-bold text-blue-400"><span>Week {sm.weekNum}</span><span>{sm.speaker}</span></div><div className="font-bold text-sm">{sm.title}</div><div className="text-[10px] text-slate-500 italic">{sm.scripture}</div><div className="text-[10px] text-slate-400 mt-1 whitespace-pre-wrap">{sm.notes}</div></div>}
-                        </div>
-                    ))}
-                    {edit==='new' ? <div className="space-y-2"><DictationInput value={fd.title} onChange={v=>setFd({...fd,title:v})} placeholder="Sermon Title" /><DictationInput value={fd.notes} onChange={v=>setFd({...fd,notes:v})} placeholder="Notes" isTextArea /><button onClick={save} className="w-full bg-blue-600 py-2 rounded font-bold text-xs">Save Sermon</button></div> : <button onClick={()=>{setFd({title:'',speaker:'',scripture:'',notes:''});setEdit('new')}} className="w-full py-2 border border-dashed border-slate-700 text-xs text-slate-500 rounded">+ Add Week</button>}
-                </div>
-            );
-        }
-
-        // --- PRODUCTION ---
-        function ProductionManager() {
-            const [sub, setSub] = React.useState('Weekly');
-            const [tasks, setTasks] = React.useState([]);
-            const [add, setAdd] = React.useState(false);
-            const [nm, setNm] = React.useState('');
-
-            React.useEffect(() => {
-                const unsub = db.collection('prod_weekly').onSnapshot(sn=>setTasks(sn.docs.map(d=>({id:d.id,...d.data()}))));
+                const unsub = db.collection('meetings').orderBy('date', 'desc').onSnapshot(snap => {
+                    setMeetings(snap.docs.map(d => ({id:d.id, ...d.data()})));
+                });
                 return () => unsub();
             }, []);
 
+            const saveMeeting = async () => {
+                await db.collection('meetings').add({...form, notes: '', tasks: []});
+                setIsAdding(false); setForm({title:'', date:'', attendees:'', docLink:''});
+            };
+
+            const updateNotes = async (id) => {
+                await db.collection('meetings').doc(id).update({ notes });
+                alert("Notes Saved");
+            };
+
+            const aiGenerateTasks = async (meeting) => {
+                // The "Local Brain" Logic
+                const lines = notes.split('\n');
+                const newTasks = [];
+                lines.forEach(line => {
+                    const l = line.toLowerCase();
+                    if(l.includes('action:') || l.includes('todo:') || l.includes('task:') || l.startsWith('- ') || l.startsWith('* ')) {
+                        newTasks.push({txt: line.replace(/action:|todo:|task:|-\ |\*\ /gi, '').trim(), done:false});
+                    }
+                });
+                
+                if(newTasks.length > 0) {
+                    const updated = [...(meeting.tasks||[]), ...newTasks];
+                    await db.collection('meetings').doc(meeting.id).update({ tasks: updated });
+                    alert(`AI found ${newTasks.length} tasks and added them!`);
+                } else {
+                    alert("AI didn't find clear tasks. Try starting lines with 'Action:' or '- '");
+                }
+            };
+
+            if(activeMeeting) {
+                // DETAIL VIEW
+                return (
+                    <div className="p-4 h-full flex flex-col">
+                        <button onClick={()=>setActiveMeeting(null)} className="flex items-center gap-2 text-slate-400 mb-4"><Icon name="ArrowLeft"/> Back</button>
+                        
+                        <div className="bg-slate-900 p-4 rounded-xl border border-slate-800 mb-4">
+                            <h2 className="text-xl font-bold">{activeMeeting.title}</h2>
+                            <div className="text-sm text-slate-400 flex gap-4 mt-2">
+                                <span className="flex items-center gap-1"><Icon name="Calendar" size={14}/> {activeMeeting.date}</span>
+                                <span className="flex items-center gap-1"><Icon name="Users" size={14}/> {activeMeeting.attendees}</span>
+                            </div>
+                            {activeMeeting.docLink && (
+                                <a href={activeMeeting.docLink} target="_blank" className="mt-3 inline-flex items-center gap-2 text-blue-400 text-sm bg-blue-900/20 px-3 py-2 rounded border border-blue-900">
+                                    <Icon name="FileText" size={14}/> Open Document
+                                </a>
+                            )}
+                        </div>
+
+                        <div className="flex-1 flex flex-col gap-4">
+                            {/* Notes Section */}
+                            <div className="flex-1 bg-slate-900 rounded-xl p-4 border border-slate-800 flex flex-col">
+                                <div className="flex justify-between items-center mb-2">
+                                    <h3 className="font-bold text-slate-400 text-xs uppercase">Meeting Notes</h3>
+                                    <button onClick={()=>updateNotes(activeMeeting.id)} className="text-blue-400"><Icon name="Save" size={18}/></button>
+                                </div>
+                                <textarea className="flex-1 bg-slate-950 font-mono text-sm" value={notes || activeMeeting.notes} onChange={e=>setNotes(e.target.value)} placeholder="Type notes here... Use 'Action:' for tasks."></textarea>
+                                <button onClick={()=>aiGenerateTasks(activeMeeting)} className="mt-2 bg-emerald-600 text-white py-2 rounded text-xs font-bold flex items-center justify-center gap-2">
+                                    <Icon name="Sparkles" size={14}/> AI: Extract Tasks
+                                </button>
+                            </div>
+
+                            {/* Task List */}
+                            <div className="flex-1 bg-slate-900 rounded-xl p-4 border border-slate-800 overflow-y-auto">
+                                <h3 className="font-bold text-slate-400 text-xs uppercase mb-3">Action Items</h3>
+                                <div className="space-y-2">
+                                    {(activeMeeting.tasks||[]).map((t,i) => (
+                                        <div key={i} className="flex gap-2 items-start">
+                                            <div className="mt-1 w-4 h-4 border border-slate-600 rounded"></div>
+                                            <span className="text-sm text-slate-300">{t.txt}</span>
+                                        </div>
+                                    ))}
+                                    {(!activeMeeting.tasks || activeMeeting.tasks.length===0) && <div className="text-slate-500 text-xs italic">No tasks yet.</div>}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )
+            }
+
+            // LIST VIEW
             return (
-                <div className="p-4 h-full flex flex-col">
-                    <div className="flex bg-slate-900 p-1 rounded-xl mb-4 shrink-0"><button onClick={()=>setSub('Weekly')} className={`flex-1 py-2 text-xs font-bold rounded-lg ${sub==='Weekly'?'bg-slate-700 text-white':'text-slate-500'}`}>Weekly</button><button onClick={()=>setSub('Projects')} className={`flex-1 py-2 text-xs font-bold rounded-lg ${sub==='Projects'?'bg-slate-700 text-white':'text-slate-500'}`}>Projects</button></div>
-                    {sub==='Weekly' ? <div className="space-y-4">{tasks.map(t => <div key={t.id} className="bg-slate-900 p-4 rounded-xl border border-slate-800"><div className="flex justify-between items-center border-b border-slate-800 pb-2 mb-2"><span className="font-bold">{t.title}</span><button onClick={()=>db.collection('prod_weekly').doc(t.id).delete()}><Icons.Trash/></button></div><div className="space-y-1">{(t.subtasks||[]).map((s,i)=><div key={i} className="flex gap-2 text-xs text-slate-400"><Icons.CheckSquare/> {s.txt}</div>)}<button onClick={()=>{const tx=prompt("Subtask:");if(tx)db.collection('prod_weekly').doc(t.id).update({subtasks:[...(t.subtasks||[]),{txt:tx,done:false}]})}} className="text-[10px] text-blue-500 mt-2">+ Add Subtask</button></div></div>)}<button onClick={()=>{const t=prompt("Checklist Name:");if(t)db.collection('prod_weekly').add({title:t,subtasks:[]})}} className="w-full py-3 border border-dashed border-slate-700 rounded-xl text-slate-500 text-xs">+ New Weekly Checklist</button></div> : <WorkflowSystem category="Production" subCategory="Projects" color="yellow" />}
+                <div className="p-4">
+                    <div className="flex justify-between items-center mb-6">
+                        <h2 className="text-2xl font-bold">Meetings</h2>
+                        <button onClick={()=>setIsAdding(true)} className="text-emerald-500"><Icon name="PlusCircle" size={28}/></button>
+                    </div>
+
+                    {isAdding && (
+                        <div className="bg-slate-800 p-4 rounded-xl mb-6 space-y-3 border border-slate-700 animate-fade-in">
+                            <input placeholder="Meeting Title" value={form.title} onChange={e=>setForm({...form, title:e.target.value})} />
+                            <input placeholder="Attendees (Comma separated)" value={form.attendees} onChange={e=>setForm({...form, attendees:e.target.value})} />
+                            <input type="date" value={form.date} onChange={e=>setForm({...form, date:e.target.value})} />
+                            <input placeholder="Google Doc / Dropbox Link (Optional)" value={form.docLink} onChange={e=>setForm({...form, docLink:e.target.value})} />
+                            <button onClick={saveMeeting} className="bg-emerald-600 w-full py-3 rounded font-bold">Create Meeting</button>
+                        </div>
+                    )}
+
+                    <div className="space-y-3">
+                        {meetings.map(m => (
+                            <div key={m.id} onClick={()=>{setActiveMeeting(m); setNotes(m.notes||'');}} className="bg-slate-900 border border-slate-800 p-4 rounded-xl hover:border-emerald-500 transition-colors cursor-pointer">
+                                <div className="flex justify-between items-start">
+                                    <div className="font-bold text-lg">{m.title}</div>
+                                    <span className="text-xs bg-emerald-900/30 text-emerald-400 px-2 py-1 rounded border border-emerald-900">{m.date}</span>
+                                </div>
+                                <div className="text-sm text-slate-500 mt-1 flex items-center gap-2">
+                                    <Icon name="Users" size={14}/> {m.attendees}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
                 </div>
             );
         }
 
-        const NavBtn = ({ id, icon: Icon, label, active, set }) => (
-            <button onClick={()=>set(id)} className={`flex flex-col items-center gap-1 transition-all ${active===id?'text-blue-400 scale-110':'text-slate-500'}`}><Icon/><span className="text-[10px] font-bold">{label}</span></button>
+        // --- 3. OTHER MANAGERS (Preserved from Previous Version) ---
+        function GenericManager({category, color}) {
+            // ... (Same logic as V2, wrapped for brevity. Copying full logic below) ...
+            const [sub, setSub] = React.useState('Projects');
+            return ( <div className="p-4 h-full flex flex-col"> <div className="flex bg-slate-900 p-1 rounded-xl mb-4 shrink-0"> {['Projects','Events','Outreach'].map(t=>( <button key={t} onClick={()=>setSub(t)} className={`flex-1 py-2 text-xs font-bold rounded-lg ${sub===t?'bg-slate-700 text-white':'text-slate-500'}`}>{t}</button> ))} </div> <WorkflowSystem category={category} sub={sub} color={color} /> </div> );
+        }
+        function UnifiedManager({category, color}) {
+            const [sub, setSub] = React.useState('Series');
+            return ( <div className="p-4 h-full flex flex-col"> <div className="flex bg-slate-900 p-1 rounded-xl mb-4 shrink-0 overflow-x-auto"> {['Series','Projects','Events','Outreach'].map(t=>( <button key={t} onClick={()=>setSub(t)} className={`flex-1 py-2 px-3 whitespace-nowrap text-xs font-bold rounded-lg ${sub===t?'bg-slate-700 text-white':'text-slate-500'}`}>{t}</button> ))} </div> {sub==='Series' ? <SeriesManager category={category} color={color}/> : <WorkflowSystem category={category} sub={sub} color={color} />} </div> );
+        }
+        function ProductionManager() {
+            const [sub, setSub] = React.useState('Weekly');
+            return ( <div className="p-4 h-full flex flex-col"> <div className="flex bg-slate-900 p-1 rounded-xl mb-4 shrink-0"> {['Weekly','Projects'].map(t=>( <button key={t} onClick={()=>setSub(t)} className={`flex-1 py-2 text-xs font-bold rounded-lg ${sub===t?'bg-slate-700 text-white':'text-slate-500'}`}>{t}</button> ))} </div> {sub==='Weekly' ? <WeeklyChecklist /> : <WorkflowSystem category="Production" sub="Projects" color="yellow" />} </div> );
+        }
+
+        // --- REUSABLE COMPONENTS (Condensed) ---
+        function WorkflowSystem({category, sub, color}) {
+            const [mode, setMode] = React.useState('Ideas'); const [items, setItems] = React.useState([]); const [isAdding, setIsAdding] = React.useState(false); const [form, setForm] = React.useState({title:'', desc:'', date:''}); const [expanded, setExpanded] = React.useState(null);
+            React.useEffect(() => { const q = db.collection('projects').where('category','==',category).where('subCategory','==',sub).where('status','==',mode==='Ideas'?'Pending':'Approved'); const unsub = q.onSnapshot(snap => setItems(snap.docs.map(d=>({id:d.id, ...d.data()})))); return () => unsub(); }, [category, sub, mode]);
+            const generateWorkflow = (title, desc, dateStr) => { const tasks = []; const due = new Date(dateStr); const daysBefore = (d, days) => { const newDate = new Date(d); newDate.setDate(d.getDate() - days); return newDate.toISOString().split('T')[0]; }; tasks.push({ txt: "Concept & Budget", date: daysBefore(due, 28), done: false }); tasks.push({ txt: "Team Recruit", date: daysBefore(due, 21), done: false }); const txt = (title + " " + desc).toLowerCase(); if(txt.includes("food")) { tasks.push({ txt: "Finalize Menu", date: daysBefore(due, 10), done: false }); } if(txt.includes("music")) { tasks.push({ txt: "Confirm Band", date: daysBefore(due, 14), done: false }); } tasks.push({ txt: "TARGET COMPLETION", date: daysBefore(due, 14), done: false, isTarget: true }); return tasks.sort((a,b) => a.date.localeCompare(b.date)); };
+            const save = async () => { if(!form.title || !form.date) return alert("Required"); await db.collection('projects').add({ category, subCategory: sub, title: form.title, desc: form.desc, dueDate: form.date, status: 'Pending', tasks: [] }); setIsAdding(false); setForm({title:'', desc:'', date:''}); };
+            const approve = async (item) => { const tasks = generateWorkflow(item.title, item.desc, item.dueDate); await db.collection('projects').doc(item.id).update({ status: 'Approved', tasks }); };
+            return ( <div className="flex-1 overflow-y-auto pb-20"> <div className="flex justify-between items-center mb-4"> <div className="flex gap-4"> <button onClick={()=>setMode('Ideas')} className={`text-sm font-bold ${mode==='Ideas'?'text-white underline':'text-slate-500'}`}>IDEAS</button> <button onClick={()=>setMode('Active')} className={`text-sm font-bold ${mode==='Active'?'text-white underline':'text-slate-500'}`}>ACTIVE</button> </div> {mode==='Ideas' && <button onClick={()=>setIsAdding(true)} className={`text-${color}-500`}><Icon name="PlusCircle"/></button>} </div> {isAdding && ( <div className="bg-slate-800 p-4 rounded-xl mb-4 space-y-3 border border-slate-700"> <input placeholder="Title" value={form.title} onChange={e=>setForm({...form, title:e.target.value})} /> <textarea placeholder="Description" value={form.desc} onChange={e=>setForm({...form, desc:e.target.value})} rows="3"></textarea> <input type="date" value={form.date} onChange={e=>setForm({...form, date:e.target.value})} /> <button onClick={save} className={`bg-${color}-600 w-full py-3 rounded font-bold`}>SAVE IDEA</button> <button onClick={()=>setIsAdding(false)} className="w-full text-slate-400 py-2 text-sm">Cancel</button> </div> )} <div className="space-y-3"> {items.map(item => ( <div key={item.id} className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden"> <div className="p-4" onClick={() => mode==='Active' && setExpanded(expanded===item.id ? null : item.id)}> <div className="flex justify-between items-start"> <div> <div className="font-bold text-lg">{item.title}</div> <div className="text-sm text-slate-400 mt-1">{item.desc}</div> <div className="text-[10px] bg-slate-800 px-2 py-1 rounded inline-block mt-2 text-slate-500 border border-slate-700">Due: {item.dueDate}</div> </div> {mode==='Ideas' ? ( <button onClick={(e)=>{e.stopPropagation(); approve(item)}} className="bg-emerald-600 text-white px-3 py-1 rounded text-xs font-bold">Approve</button> ) : ( <div className={`text-${color}-500`}><Icon name={expanded===item.id ? "ChevronDown" : "ChevronRight"} size={20}/></div> )} </div> </div> {expanded===item.id && mode==='Active' && ( <div className="bg-slate-950 p-4 border-t border-slate-800 space-y-3"> <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Tasks</div> {item.tasks && item.tasks.map((t,i) => ( <div key={i} className="flex gap-3 text-sm"> <div className={`mt-1 w-4 h-4 border rounded flex items-center justify-center ${t.done?'bg-blue-600 border-blue-600':'border-slate-600'}`}> {t.done && <Icon name="Check" size={10} />} </div> <div> <div className={t.isTarget ? 'text-emerald-400 font-bold' : 'text-slate-300'}>{t.txt}</div> <div className="text-[10px] text-slate-500">{t.date}</div> </div> </div> ))} </div> )} </div> ))} </div> </div> );
+        }
+        function SeriesManager({category, color}) {
+             const [series, setSeries] = React.useState([]); const [addMode, setAddMode] = React.useState(false); const [form, setForm] = React.useState({title:'', weeks:''}); const [expanded, setExpanded] = React.useState(null);
+             React.useEffect(() => { const unsub = db.collection('series').where('category','==',category).onSnapshot(snap => setSeries(snap.docs.map(d=>({id:d.id, ...d.data()})))); return () => unsub(); }, [category]);
+             const save = async () => { await db.collection('series').add({category, title:form.title, weeks:form.weeks}); setAddMode(false); setForm({title:'', weeks:''}); }
+             return ( <div className="flex-1 overflow-y-auto pb-20"> <div className="flex justify-between items-center mb-4"> <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest">Sermon Series</h3> <button onClick={()=>setAddMode(true)} className={`text-${color}-500`}><Icon name="PlusCircle"/></button> </div> {addMode && ( <div className="bg-slate-800 p-4 rounded-xl mb-4 space-y-3 border border-slate-700"> <input placeholder="Series Title" value={form.title} onChange={e=>setForm({...form, title:e.target.value})} /> <input placeholder="Num Weeks" type="number" value={form.weeks} onChange={e=>setForm({...form, weeks:e.target.value})} /> <button onClick={save} className={`bg-${color}-600 w-full py-2 rounded font-bold`}>Save Series</button> </div> )} <div className="space-y-3"> {series.map(s => ( <div key={s.id} className="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden"> <div className="p-4 flex justify-between" onClick={()=>setExpanded(expanded===s.id?null:s.id)}> <div><div className="font-bold">{s.title}</div><div className="text-xs text-slate-500">{s.weeks} Weeks</div></div> <Icon name="ChevronDown" size={16}/> </div> {expanded===s.id && <SermonList seriesId={s.id} color={color}/>} </div> ))} </div> </div> )
+        }
+        function SermonList({seriesId, color}) {
+             const [sermons, setSermons] = React.useState([]); const [form, setForm] = React.useState({title:'', speaker:'', scripture:'', notes:''}); const [isAdding, setIsAdding] = React.useState(false);
+             React.useEffect(() => { const unsub = db.collection('sermons').where('seriesId','==',seriesId).orderBy('weekNum').onSnapshot(snap => setSermons(snap.docs.map(d=>({id:d.id, ...d.data()})))); return () => unsub(); }, [seriesId]);
+             const save = async () => { await db.collection('sermons').add({...form, seriesId, weekNum: sermons.length + 1}); setIsAdding(false); setForm({title:'', speaker:'', scripture:'', notes:''}); };
+             return ( <div className="bg-slate-950 p-4 border-t border-slate-800"> {sermons.map(s => ( <div key={s.id} className="mb-4 pb-4 border-b border-slate-800"> <div className="flex justify-between text-xs mb-1"><span className={`text-${color}-400 font-bold`}>Week {s.weekNum}</span><span className="text-slate-500">{s.speaker}</span></div> <div className="font-bold">{s.title}</div> <div className="text-xs italic text-slate-400 mb-2">{s.scripture}</div> <div className="text-xs bg-slate-900 p-2 rounded text-slate-300">{s.notes}</div> </div> ))} {isAdding ? ( <div className="space-y-2 mt-4 bg-slate-900 p-3 rounded"> <input placeholder="Title" value={form.title} onChange={e=>setForm({...form, title:e.target.value})} /> <input placeholder="Speaker" value={form.speaker} onChange={e=>setForm({...form, speaker:e.target.value})} /> <input placeholder="Scripture" value={form.scripture} onChange={e=>setForm({...form, scripture:e.target.value})} /> <textarea placeholder="Notes" value={form.notes} onChange={e=>setForm({...form, notes:e.target.value})} rows="3"></textarea> <button onClick={save} className={`bg-${color}-600 w-full py-2 rounded text-xs font-bold`}>Save Sermon</button> </div> ) : ( <button onClick={()=>setIsAdding(true)} className="w-full py-2 border border-dashed border-slate-700 text-xs rounded text-slate-500 hover:text-white">+ Add Week {sermons.length+1}</button> )} </div> )
+        }
+        function WeeklyChecklist() {
+             const [tasks, setTasks] = React.useState([]); const [isAdding, setIsAdding] = React.useState(false); const [mainTitle, setMainTitle] = React.useState('');
+             React.useEffect(() => { const unsub = db.collection('prod_weekly').onSnapshot(snap => setTasks(snap.docs.map(d=>({id:d.id, ...d.data()})))); return () => unsub(); }, []);
+             const addMain = async () => { await db.collection('prod_weekly').add({title:mainTitle, subtasks:[]}); setMainTitle(''); setIsAdding(false); };
+             const addSub = async (id, current) => { const txt = prompt("Subtask:"); if(txt) await db.collection('prod_weekly').doc(id).update({ subtasks: [...(current||[]), {txt, done:false}] }); };
+             const toggleSub = async (id, idx, current) => { const updated = [...current]; updated[idx].done = !updated[idx].done; await db.collection('prod_weekly').doc(id).update({ subtasks: updated }); };
+             return ( <div className="flex-1 overflow-y-auto pb-20"> <div className="flex justify-between items-center mb-4"> <h3 className="text-xs font-bold text-yellow-500 uppercase tracking-widest">Weekly Checklist</h3> <button onClick={()=>setIsAdding(true)} className="text-yellow-500"><Icon name="PlusCircle"/></button> </div> {isAdding && ( <div className="flex gap-2 mb-4"> <input value={mainTitle} onChange={e=>setMainTitle(e.target.value)} placeholder="Task Name"/> <button onClick={addMain} className="bg-yellow-600 px-4 rounded font-bold">Add</button> </div> )} <div className="space-y-4"> {tasks.map(t => ( <div key={t.id} className="bg-slate-900 border border-slate-800 rounded-xl p-4"> <div className="flex justify-between items-center mb-3 border-b border-slate-800 pb-2"> <div className="font-bold">{t.title}</div> <button onClick={()=>addSub(t.id, t.subtasks)} className="text-xs text-blue-400 font-bold">+ SUB</button> </div> <div className="space-y-2"> {(t.subtasks||[]).map((sub,i) => ( <div key={i} className="flex gap-2 items-center" onClick={()=>toggleSub(t.id, i, t.subtasks)}> <div className={`w-4 h-4 rounded border flex items-center justify-center ${sub.done?'bg-yellow-500 border-yellow-500':'border-slate-600'}`}> {sub.done && <Icon name="Check" size={10} className="text-black"/>} </div> <div className={`text-sm ${sub.done?'line-through text-slate-500':'text-slate-300'}`}>{sub.txt}</div> </div> ))} </div> </div> ))} </div> </div> )
+        }
+
+        const NavBtn = ({id, icon, label, active, set}) => (
+            <button onClick={()=>set(id)} className={`tab-btn ${active===id?'tab-active':''}`}>
+                <Icon name={icon} size={24} />
+                <span className="text-[10px] font-bold">{label}</span>
+            </button>
         );
 
         const root = ReactDOM.createRoot(document.getElementById('root'));
