@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>MinistryOS 3.0</title>
+    <title>MinistryOS 3.1</title>
     <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#0f172a">
 
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
     <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
@@ -26,7 +26,7 @@
         .dot { width: 6px; height: 6px; border-radius: 50%; margin-bottom: 2px; }
         input, textarea, select { background: #1e293b; border: 1px solid #334155; color: white; border-radius: 8px; padding: 12px; width: 100%; outline: none; font-size: 16px; }
         label { font-size: 11px; text-transform: uppercase; color: #94a3b8; font-weight: bold; margin-bottom: 4px; display: block; }
-        .tab-btn { display: flex; flex-direction: column; items: center; gap: 4px; color: #64748b; transition: all 0.2s; }
+        .tab-btn { display: flex; flex-direction: column; align-items: center; gap: 4px; color: #64748b; transition: all 0.2s; }
         .tab-active { color: #3b82f6; transform: scale(1.1); }
     </style>
 </head>
@@ -46,11 +46,28 @@
         if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
-        // --- ICONS ---
-        const Icons = window.lucide;
+        // --- HARDCODED ICONS (CRASH PROOF) ---
         const Icon = ({name, size=20, className}) => {
-            const LucideIcon = Icons[name] || Icons.HelpCircle;
-            return <LucideIcon size={size} className={className} />;
+            const icons = {
+                Calendar: <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>,
+                Briefcase: <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>,
+                MapPin: <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>,
+                Mic2: <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg>,
+                Users: <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>,
+                BookOpen: <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>,
+                ChevronLeft: <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="15 18 9 12 15 6"></polyline></svg>,
+                ChevronRight: <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="9 18 15 12 9 6"></polyline></svg>,
+                List: <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>,
+                ArrowLeft: <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>,
+                FileText: <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>,
+                Save: <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>,
+                Sparkles: <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"></path></svg>,
+                PlusCircle: <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>,
+                Plus: <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>,
+                Check: <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="20 6 9 17 4 12"></polyline></svg>,
+                ChevronDown: <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="6 9 12 15 18 9"></polyline></svg>
+            };
+            return icons[name] || <span style={{fontSize:10}}>?</span>;
         };
 
         // --- APP ---
@@ -65,7 +82,7 @@
                             <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center font-bold text-white">M</div>
                             <span className="font-bold text-lg tracking-tight">MinistryOS</span>
                         </div>
-                        <div className="text-[10px] bg-slate-800 px-2 py-1 rounded text-slate-400">V3.0</div>
+                        <div className="text-[10px] bg-slate-800 px-2 py-1 rounded text-slate-400">V3.1</div>
                     </div>
 
                     {/* Content */}
@@ -97,11 +114,8 @@
             const [events, setEvents] = React.useState([]);
 
             React.useEffect(() => {
-                // Fetch Projects
                 const unsub1 = db.collection('projects').onSnapshot(snap => {
                     const items = snap.docs.map(d => ({id: d.id, ...d.data(), type:'Project'}));
-                    
-                    // Fetch Meetings (Nested listener for simplicity in this file)
                     db.collection('meetings').get().then(mSnap => {
                         const meets = mSnap.docs.map(d => ({id:d.id, ...d.data(), type:'Meeting', category:'Meeting'}));
                         setEvents([...items, ...meets]);
@@ -127,14 +141,12 @@
                 return events.filter(e => e.dueDate === dateStr || e.date === dateStr);
             };
 
-            // Master Agenda Logic (Future Events Only)
             const upcomingEvents = events
                 .filter(e => new Date(e.dueDate || e.date) >= new Date(new Date().setHours(0,0,0,0)))
                 .sort((a,b) => (a.dueDate||a.date).localeCompare(b.dueDate||b.date));
 
             return (
                 <div className="p-4">
-                    {/* Calendar Grid */}
                     <div className="flex justify-between items-center mb-6">
                         <button onClick={()=>setDate(new Date(date.setMonth(date.getMonth()-1)))}><Icon name="ChevronLeft"/></button>
                         <h2 className="text-xl font-bold">{monthNames[date.getMonth()]} {date.getFullYear()}</h2>
@@ -158,7 +170,6 @@
                         })}
                     </div>
 
-                    {/* Master Agenda List */}
                     <div className="space-y-4">
                         <div className="flex items-center gap-2 mb-2">
                             <Icon name="List" size={16} className="text-slate-500"/>
@@ -190,13 +201,11 @@
             );
         }
 
-        // --- 2. MEETINGS MANAGER (New Feature) ---
+        // --- 2. MEETINGS MANAGER ---
         function MeetingsManager() {
             const [meetings, setMeetings] = React.useState([]);
             const [isAdding, setIsAdding] = React.useState(false);
             const [activeMeeting, setActiveMeeting] = React.useState(null);
-
-            // Form Data
             const [form, setForm] = React.useState({title:'', date:'', attendees:'', docLink:''});
             const [notes, setNotes] = React.useState('');
 
@@ -218,12 +227,11 @@
             };
 
             const aiGenerateTasks = async (meeting) => {
-                // The "Local Brain" Logic
                 const lines = notes.split('\n');
                 const newTasks = [];
                 lines.forEach(line => {
                     const l = line.toLowerCase();
-                    if(l.includes('action:') || l.includes('todo:') || l.includes('task:') || l.startsWith('- ') || l.startsWith('* ')) {
+                    if(l.includes('action:') || l.includes('todo:') || l.startsWith('- ')) {
                         newTasks.push({txt: line.replace(/action:|todo:|task:|-\ |\*\ /gi, '').trim(), done:false});
                     }
                 });
@@ -231,14 +239,13 @@
                 if(newTasks.length > 0) {
                     const updated = [...(meeting.tasks||[]), ...newTasks];
                     await db.collection('meetings').doc(meeting.id).update({ tasks: updated });
-                    alert(`AI found ${newTasks.length} tasks and added them!`);
+                    alert(`AI found ${newTasks.length} tasks!`);
                 } else {
-                    alert("AI didn't find clear tasks. Try starting lines with 'Action:' or '- '");
+                    alert("Try starting lines with 'Action:' or '- '");
                 }
             };
 
             if(activeMeeting) {
-                // DETAIL VIEW
                 return (
                     <div className="p-4 h-full flex flex-col">
                         <button onClick={()=>setActiveMeeting(null)} className="flex items-center gap-2 text-slate-400 mb-4"><Icon name="ArrowLeft"/> Back</button>
@@ -257,7 +264,6 @@
                         </div>
 
                         <div className="flex-1 flex flex-col gap-4">
-                            {/* Notes Section */}
                             <div className="flex-1 bg-slate-900 rounded-xl p-4 border border-slate-800 flex flex-col">
                                 <div className="flex justify-between items-center mb-2">
                                     <h3 className="font-bold text-slate-400 text-xs uppercase">Meeting Notes</h3>
@@ -269,7 +275,6 @@
                                 </button>
                             </div>
 
-                            {/* Task List */}
                             <div className="flex-1 bg-slate-900 rounded-xl p-4 border border-slate-800 overflow-y-auto">
                                 <h3 className="font-bold text-slate-400 text-xs uppercase mb-3">Action Items</h3>
                                 <div className="space-y-2">
@@ -287,7 +292,6 @@
                 )
             }
 
-            // LIST VIEW
             return (
                 <div className="p-4">
                     <div className="flex justify-between items-center mb-6">
@@ -296,11 +300,11 @@
                     </div>
 
                     {isAdding && (
-                        <div className="bg-slate-800 p-4 rounded-xl mb-6 space-y-3 border border-slate-700 animate-fade-in">
+                        <div className="bg-slate-800 p-4 rounded-xl mb-6 space-y-3 border border-slate-700">
                             <input placeholder="Meeting Title" value={form.title} onChange={e=>setForm({...form, title:e.target.value})} />
-                            <input placeholder="Attendees (Comma separated)" value={form.attendees} onChange={e=>setForm({...form, attendees:e.target.value})} />
+                            <input placeholder="Attendees" value={form.attendees} onChange={e=>setForm({...form, attendees:e.target.value})} />
                             <input type="date" value={form.date} onChange={e=>setForm({...form, date:e.target.value})} />
-                            <input placeholder="Google Doc / Dropbox Link (Optional)" value={form.docLink} onChange={e=>setForm({...form, docLink:e.target.value})} />
+                            <input placeholder="Google Doc Link (Optional)" value={form.docLink} onChange={e=>setForm({...form, docLink:e.target.value})} />
                             <button onClick={saveMeeting} className="bg-emerald-600 w-full py-3 rounded font-bold">Create Meeting</button>
                         </div>
                     )}
@@ -322,9 +326,8 @@
             );
         }
 
-        // --- 3. OTHER MANAGERS (Preserved from Previous Version) ---
+        // --- 3. OTHER MANAGERS ---
         function GenericManager({category, color}) {
-            // ... (Same logic as V2, wrapped for brevity. Copying full logic below) ...
             const [sub, setSub] = React.useState('Projects');
             return ( <div className="p-4 h-full flex flex-col"> <div className="flex bg-slate-900 p-1 rounded-xl mb-4 shrink-0"> {['Projects','Events','Outreach'].map(t=>( <button key={t} onClick={()=>setSub(t)} className={`flex-1 py-2 text-xs font-bold rounded-lg ${sub===t?'bg-slate-700 text-white':'text-slate-500'}`}>{t}</button> ))} </div> <WorkflowSystem category={category} sub={sub} color={color} /> </div> );
         }
@@ -337,7 +340,7 @@
             return ( <div className="p-4 h-full flex flex-col"> <div className="flex bg-slate-900 p-1 rounded-xl mb-4 shrink-0"> {['Weekly','Projects'].map(t=>( <button key={t} onClick={()=>setSub(t)} className={`flex-1 py-2 text-xs font-bold rounded-lg ${sub===t?'bg-slate-700 text-white':'text-slate-500'}`}>{t}</button> ))} </div> {sub==='Weekly' ? <WeeklyChecklist /> : <WorkflowSystem category="Production" sub="Projects" color="yellow" />} </div> );
         }
 
-        // --- REUSABLE COMPONENTS (Condensed) ---
+        // --- REUSABLE COMPONENTS ---
         function WorkflowSystem({category, sub, color}) {
             const [mode, setMode] = React.useState('Ideas'); const [items, setItems] = React.useState([]); const [isAdding, setIsAdding] = React.useState(false); const [form, setForm] = React.useState({title:'', desc:'', date:''}); const [expanded, setExpanded] = React.useState(null);
             React.useEffect(() => { const q = db.collection('projects').where('category','==',category).where('subCategory','==',sub).where('status','==',mode==='Ideas'?'Pending':'Approved'); const unsub = q.onSnapshot(snap => setItems(snap.docs.map(d=>({id:d.id, ...d.data()})))); return () => unsub(); }, [category, sub, mode]);
