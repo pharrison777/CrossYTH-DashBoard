@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>CrossYTH</title>
+    
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="CrossYTH">
+    <meta name="theme-color" content="#0f172a">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
+
+    <style>
+        /* Smooth scrolling & remove scrollbars for app-feel */
+        html, body { overscroll-behavior-y: none; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        /* Safe area padding for iPhones with notches */
+        .safe-pb { padding-bottom: env(safe-area-inset-bottom); }
+        .safe-pt { padding-top: env(safe-area-inset-top); }
+    </style>
+
+    <script>
+        // This script generates the PWA Manifest and Icon on the fly
+        // so you only need this ONE single HTML file.
+        (function() {
+            // 1. Create the Icon (Base64 SVG)
+            const iconSVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" style="background:#0f172a"><path d="M256 32C132.3 32 32 132.3 32 256s100.3 224 224 224 224-100.3 224-224S379.7 32 256 32zm0 400c-97 0-176-79-176-176S159 80 256 80s176 79 176 176-79 176-176 176zm-20-268h40v80h80v40h-80v128h-40V284h-80v-40h80v-80z" fill="#60a5fa"/></svg>`;
+            const iconUrl = "data:image/svg+xml;base64," + btoa(iconSVG);
+
+            // 2. Set Favicon
+            const link = document.createElement('link');
+            link.rel = 'icon';
+            link.href = iconUrl;
+            document.head.appendChild(link);
+            
+            // 3. Set Apple Touch Icon
+            const appleLink = document.createElement('link');
+            appleLink.rel = 'apple-touch-icon';
+            appleLink.href = iconUrl;
+            document.head.appendChild(appleLink);
+
+            // 4. Generate Manifest
+            const manifest = {
+                "name": "CrossYTH Dashboard",
+                "short_name": "CrossYTH",
+                "start_url": ".",
+                "display": "standalone",
+                "background_color": "#0f172a",
+                "theme_color": "#0f172a",
+                "orientation": "portrait",
+                "icons": [{ "src": iconUrl, "sizes": "512x512", "type": "image/svg+xml" }]
+            };
+            
+            const manifestBlob = new Blob([JSON.stringify(manifest)], {type: 'application/json'});
+            const manifestUrl = URL.createObjectURL(manifestBlob);
+            
+            const manifestLink = document.createElement('link');
+            manifestLink.rel = 'manifest';
+            manifestLink.href = manifestUrl;
+            document.head.appendChild(manifestLink);
+        })();
+    </script>
+</head>
+<body class="bg-slate-50 text-slate-900 h-screen w-screen overflow-hidden select-none">
+
+    <div id="root" class="h-full w-full"></div>
+
+    <script type="text/babel">
+        // --- 1. FIREBASE CONFIG ---
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getFirestore, collection, addDoc, query, onSnapshot, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+        // Your Config
+        const firebaseConfig = {
+          apiKey: "AIzaSyCWTjZ5P-cvfL3bgFOrl53qRQEfWP35ThE",
+          authDomain: "crossyth-dashboard.firebaseapp.com",
+          projectId: "crossyth-dashboard",
+          storageBucket: "crossyth-dashboard.firebasestorage.app",
+          messagingSenderId: "999386499044",
+          appId: "1:999386499044:web:49e4bc10c133b4c20f29f1",
+          measurementId: "G-YX6RZ0QCKM"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        
+        // --- 2. ICONS ---
+        const { Calendar, Users, FileText, Menu, X, Home, Layout, BookOpen, ChevronRight, PlusCircle } = window.lucide;
+
+        // --- 3. APP COMPONENT ---
+        function App() {
+            const [activeTab, setActiveTab] = React.useState('dashboard');
+            const [isMenuOpen, setIsMenuOpen] = React.useState(false);
+
+            // Close menu when clicking outside (mobile behavior)
+            const handleNav = (tab) => {
+                setActiveTab(tab);
+                setIsMenuOpen(false);
+            };
+
+            const renderScreen = () => {
+                switch(activeTab) {
+                    case 'dashboard': return <DashboardView />;
+                    case 'crosslink': return <CrossLinkManager />;
+                    case 'calendar': return <CalendarView />;
+                    default: return <DashboardView />;
+                }
+            };
+
+            return (
+                <div className="flex h-full w-full flex-col lg:flex-row bg-slate-900">
+                    
+                    {/* MOBILE TOP BAR */}
+                    <div className="lg:hidden flex justify-between items-center p-4 bg-slate-900 text-white safe-pt border-b border-slate-800 z-50">
+                        <div className="flex items-center gap-2">
+                            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center font-bold">CY</div>
+                            <span className="font-bold text-lg tracking-tight">CrossYTH</span>
+                        </div>
+                        <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="p-2 active:bg-slate-800 rounded-full">
+                            {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
+                        </button>
+                    </div>
+
+                    {/* SIDEBAR NAVIGATION */}
+                    <nav className={`
+                        fixed inset-0 bg-slate-900/95 backdrop-blur-sm z-40 transition-transform duration-300 ease-in-out
+                        flex flex-col pt-20 px-6
+                        lg:relative lg:translate-x-0 lg:w-64 lg:bg-slate-900 lg:pt-8 lg:px-4 lg:border-r lg:border-slate-800
+                        ${isMenuOpen ? 'translate-x-0' : 'translate-x-full lg:translate-x-0'}
+                    `}>
+                        <div className="hidden lg:flex items-center gap-3 mb-10 px-2">
+                            <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center font-bold text-white shadow-lg shadow-blue-900/50">CY</div>
+                            <div>
+                                <h1 className="font-bold text-white text-xl leading-none">CrossYTH</h1>
+                                <span className="text-xs text-slate-500 uppercase tracking-wider">Dashboard</span>
+                            </div>
+                        </div>
+
+                        <div className="space-y-1">
+                            <NavItem icon={<Home size={20}/>} label="Dashboard" active={activeTab === 'dashboard'} onClick={() => handleNav('dashboard')} />
+                            <NavItem icon={<BookOpen size={20}/>} label="CrossLink (Sermons)" active={activeTab === 'crosslink'} onClick={() => handleNav('crosslink')} />
+                            <NavItem icon={<Calendar size={20}/>} label="Ministry Calendar" active={activeTab === 'calendar'} onClick={() => handleNav('calendar')} />
+                        </div>
+
+                        <div className="mt-auto mb-8 safe-pb">
+                            <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700">
+                                <p className="text-xs text-slate-400 font-medium mb-2">SYSTEM STATUS</p>
+                                <div className="flex items-center gap-2">
+                                    <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
+                                    <span className="text-xs text-emerald-400 font-mono">ONLINE</span>
+                                </div>
+                            </div>
+                        </div>
+                    </nav>
+
+                    {/* MAIN CONTENT AREA */}
+                    <main className="flex-1 bg-slate-50 lg:rounded-tl-3xl overflow-hidden flex flex-col relative w-full">
+                        <div className="flex-1 overflow-y-auto no-scrollbar p-4 lg:p-8 safe-pb">
+                            {renderScreen()}
+                        </div>
+                    </main>
+
+                </div>
+            );
+        }
+
+        // --- COMPONENT: DASHBOARD ---
+        function DashboardView() {
+            return (
+                <div className="space-y-6 max-w-4xl mx-auto">
+                    <header>
+                        <h2 className="text-2xl font-bold text-slate-900">Welcome, Pastor Casey</h2>
+                        <p className="text-slate-500">Here is what is happening this week.</p>
+                    </header>
+
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                        <StatCard label="Next Sermon" value="3 Days" color="bg-blue-600" />
+                        <StatCard label="Events" value="2 Active" color="bg-orange-500" />
+                        <StatCard label="Leaders" value="14" color="bg-emerald-600" />
+                        <StatCard label="Pending" value="0" color="bg-slate-600" />
+                    </div>
+
+                    <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
+                        <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
+                            <Layout size={18} className="text-blue-600"/> Quick Actions
+                        </h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <button className="flex items-center justify-between p-4 bg-slate-50 rounded-xl border border-slate-200 hover:border-blue-400 transition-colors group">
+                                <span className="font-medium text-slate-700">Add New Event</span>
+                                <PlusCircle size={20} className="text-slate-400 group-hover:text-blue-500"/>
+                            </button>
+                            <button className="flex items-center justify-between p-4 bg-slate-50 rounded-xl border border-slate-200 hover:border-blue-400 transition-colors group">
+                                <span className="font-medium text-slate-700">Email Leaders</span>
+                                <Users size={20} className="text-slate-400 group-hover:text-blue-500"/>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        // --- COMPONENT: CROSSLINK (SERMONS) ---
+        function CrossLinkManager() {
+            const [sermons, setSermons] = React.useState([]);
+            const [loading, setLoading] = React.useState(true);
+
+            // Fetch Real-time
+            React.useEffect(() => {
+                const q = query(collection(db, 'sermons'), orderBy('date', 'desc')); // Assuming you might add dates later
+                const unsubscribe = onSnapshot(collection(db, 'sermons'), (snapshot) => {
+                    const data = snapshot.docs.map(doc => ({id: doc.id, ...doc.data()}));
+                    setSermons(data);
+                    setLoading(false);
+                });
+                return () => unsubscribe();
+            }, []);
+
+            const handleAddSermon = async () => {
+                const title = prompt("Sermon Title:");
+                const scripture = prompt("Main Scripture Reference:"); 
+                if(!title) return;
+                
+                await addDoc(collection(db, 'sermons'), {
+                    title,
+                    scripture: scripture || "TBD",
+                    date: new Date().toISOString().split('T')[0],
+                    status: 'planning',
+                    type: 'sermon'
+                });
+            };
+
+            return (
+                <div className="max-w-4xl mx-auto h-full flex flex-col">
+                    <div className="flex justify-between items-end mb-6">
+                        <div>
+                            <h2 className="text-2xl font-bold text-slate-900">CrossLink Manager</h2>
+                            <p className="text-sm text-slate-500">Sermons & Teaching Series</p>
+                        </div>
+                        <button onClick={handleAddSermon} className="bg-slate-900 text-white px-4 py-2 rounded-lg font-medium text-sm shadow-lg active:scale-95 transition-transform flex items-center gap-2">
+                            <PlusCircle size={16}/> New Series
+                        </button>
+                    </div>
+
+                    <div className="space-y-3 pb-20">
+                        {loading && <div className="text-center p-10 text-slate-400">Loading Ministry Data...</div>}
+                        
+                        {sermons.map(item => (
+                            <div key={item.id} className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 hover:shadow-md transition-shadow">
+                                <div className="flex justify-between items-start">
+                                    <div>
+                                        <span className="inline-block px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-blue-100 text-blue-700 mb-2">
+                                            {item.status || 'Planning'}
+                                        </span>
+                                        <h3 className="font-bold text-lg text-slate-800 leading-tight">{item.title}</h3>
+                                        <p className="text-slate-500 text-sm mt-1 flex items-center gap-1">
+                                            <BookOpen size={12}/> {item.scripture}
+                                        </p>
+                                    </div>
+                                    <button className="text-slate-300 hover:text-slate-600 p-2">
+                                        <ChevronRight size={20}/>
+                                    </button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            );
+        }
+
+        // --- COMPONENT: CALENDAR ---
+        function CalendarView() {
+            return (
+                <div className="flex flex-col items-center justify-center h-full text-slate-400 text-center p-6">
+                    <div className="w-16 h-16 bg-slate-200 rounded-full flex items-center justify-center mb-4 text-slate-500">
+                        <Calendar size={32}/>
+                    </div>
+                    <h2 className="text-xl font-bold text-slate-700">Ministry Calendar</h2>
+                    <p className="text-sm mt-2 max-w-xs">
+                        This module will sync CrossYTH events to your Samsung & Gmail calendars.
+                    </p>
+                    <button className="mt-6 px-6 py-2 border border-slate-300 rounded-full text-sm font-medium hover:bg-white transition-colors">
+                        Sync Now (Coming Soon)
+                    </button>
+                </div>
+            );
+        }
+
+        // --- UI HELPERS ---
+        const NavItem = ({ icon, label, active, onClick }) => (
+            <button onClick={onClick} className={`
+                w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group
+                ${active ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/20' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}
+            `}>
+                <div className={`${active ? 'text-white' : 'text-slate-500 group-hover:text-white'}`}>
+                    {icon}
+                </div>
+                <span className="font-medium text-sm">{label}</span>
+            </button>
+        );
+
+        const StatCard = ({ label, value, color }) => (
+            <div className={`${color} p-4 rounded-xl text-white shadow-lg`}>
+                <div className="text-2xl lg:text-3xl font-bold">{value}</div>
+                <div className="text-[10px] lg:text-xs uppercase tracking-wider opacity-80 font-semibold">{label}</div>
+            </div>
+        );
+
+        // --- RENDER ---
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
